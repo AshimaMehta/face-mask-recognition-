@@ -1,0 +1,33 @@
+face_CascadeClassifier=cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+labels_dict={0:'MASK',1:'NO MASK'}
+color_dict={0:(0,255,0),1:(0,0,255)}
+
+
+cam=cv2.VideoCapture(0)
+
+
+def face_detector(photo):
+    gray=cv2.cvtColor(photo,cv2.COLOR_BGR2GRAY)
+    face_coordinates = face_CascadeClassifier.detectMultiScale(gray,1.3,5)
+    for x,y,w,h in face_coordinates:
+        face_img=gray[y:y+w,x:x+w]
+        resized=cv2.resize(face_img,(100,100))
+        normalized=resized/255.0
+        reshaped=np.reshape(normalized,(1,100,100,1))
+        result=model.predict(reshaped)
+        label=np.argmax(result,axis=1)[0]
+        cv2.rectangle(photo,(x,y),(x+w,y+h),color_dict[label],3)
+        cv2.rectangle(photo,(x,y-40),(x+w,y),color_dict[label],-1)
+        cv2.putText(photo, labels_dict[label], (x, y-10),cv2.FONT_ITALIC,1,(255,255,255),2)
+    return photo
+
+
+while True:
+    status , photo = cam.read()
+    photo = cv2.resize(photo,(540,620))
+    photo = face_detector(photo)
+    cv2.imshow('Live',photo)
+    if cv2.waitKey(1) == 27:
+        break
+cv2.destroyAllWindows()
+cam.release()
